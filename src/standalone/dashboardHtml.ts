@@ -1,0 +1,567 @@
+export const STANDALONE_DASHBOARD_HTML = `<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Training Dashboard - ผลการประเมินแบบเรียลไทม์</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Prompt & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- QRCode.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase App & Realtime Database SDK (v10 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+    }
+    .font-num {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.4); opacity: 0; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+    .pulse-indicator {
+      animation: pulse-ring 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+
+  <!-- Main Container (Projector Optimized: 16:9 widescreen or desktop) -->
+  <div class="max-w-7xl mx-auto w-full space-y-6">
+
+    <!-- Top Bar / Stage Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="relative flex items-center justify-center">
+            <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
+            <span class="absolute w-5 h-5 rounded-full bg-emerald-400 pulse-indicator"></span>
+          </div>
+          <span class="text-xs uppercase tracking-widest font-semibold text-emerald-400">REAL-TIME LIVE DASHBOARD</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-white mt-1">ผลการประเมินความพึงพอใจการอบรมสด</h1>
+        <p class="text-xs md:text-sm text-slate-400 mt-0.5">ระบบสรุปผลคะแนนแบบอัตโนมัติ อัปเดตทันทีที่ผู้เข้าอบรมกดส่ง</p>
+      </div>
+
+      <!-- Action Buttons (CSV, Fullscreen, Demo) -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          onclick="openQrModal()"
+          class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-semibold rounded-xl border border-slate-700/80 transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+          <span>ขยาย QR Code ขึ้นจอ</span>
+        </button>
+
+        <button
+          onclick="exportCSV()"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs md:text-sm font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <span>ดาวน์โหลด CSV</span>
+        </button>
+
+        <button
+          onclick="toggleFullScreen()"
+          class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition-all cursor-pointer"
+          title="เต็มจอโปรเจกเตอร์ (Fullscreen)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top KPI Cards Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+      <!-- Total Responses -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+        <span class="text-xs font-medium text-slate-400">จำนวนผู้ตอบแบบประเมิน</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span id="stat-count" class="font-num text-4xl font-extrabold text-white">0</span>
+          <span class="text-sm text-slate-400">คน</span>
+        </div>
+        <div class="mt-3 text-[11px] text-emerald-400 flex items-center gap-1">
+          <span>● รับข้อมูลเรียลไทม์</span>
+        </div>
+      </div>
+
+      <!-- Overall Mean Score -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+        <span class="text-xs font-medium text-slate-400">คะแนนเฉลี่ยรวม (Overall Mean)</span>
+        <div class="flex items-baseline gap-2 mt-2">
+          <span id="stat-overall-score" class="font-num text-4xl font-extrabold text-emerald-400">0.00</span>
+          <span class="text-sm text-slate-400">/ 5.00</span>
+        </div>
+        <div class="mt-3 text-[11px] text-slate-400 flex items-center justify-between">
+          <span>จากคะแนนเต็ม 5 ระดับ</span>
+          <span id="stat-percentage" class="font-num font-semibold text-emerald-400">0%</span>
+        </div>
+      </div>
+
+      <!-- Qualitative Interpretation -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm md:col-span-2">
+        <span class="text-xs font-medium text-slate-400">การแปลผลตามเกณฑ์มาตรฐาน Likert Scale</span>
+        <div class="mt-2 flex items-center gap-3">
+          <div id="stat-badge" class="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-sm md:text-base">
+            -
+          </div>
+          <span id="stat-badge-desc" class="text-xs text-slate-300">รอผลการประเมิน...</span>
+        </div>
+        <div class="mt-3 text-[11px] text-slate-400">
+          เกณฑ์: 4.51-5.00 มากที่สุด | 3.51-4.50 มาก | 2.51-3.50 ปานกลาง | 1.51-2.50 น้อย | 1.00-1.50 น้อยที่สุด
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Content Grid: Chart & QR Code Banner & Latest Comments -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left 2 Cols: Circular Donut / Bar Chart of Question Averages -->
+      <div class="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-lg font-bold text-white">ผลการประเมินความพึงพอใจรายข้อ (1 - 5)</h2>
+            <p class="text-xs text-slate-400">แสดงผลในรูปแบบกราฟวงกลมและเปรียบเทียบคะแนนแต่ละหัวข้อ</p>
+          </div>
+          <!-- Chart Switcher -->
+          <div class="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs self-start sm:self-auto">
+            <button
+              id="btn-chart-doughnut"
+              onclick="setChartType('doughnut')"
+              class="px-3 py-1.5 rounded-lg font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer"
+            >
+              ◉ กราฟวงกลม (Donut)
+            </button>
+            <button
+              id="btn-chart-bar"
+              onclick="setChartType('bar')"
+              class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
+            >
+              📊 กราฟแท่ง (Bar)
+            </button>
+          </div>
+        </div>
+        
+        <div class="relative flex-1 min-h-[300px]">
+          <canvas id="barChart"></canvas>
+        </div>
+
+        <!-- Question Breakdown Summary List -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-6 pt-5 border-t border-slate-800/80">
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 line-clamp-1">1. เนื้อหาหลักสูตร</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="q1-score" class="font-num text-xl font-bold text-emerald-400">-</span>
+              <span class="text-xs text-slate-400">/ 5.0</span>
+            </div>
+          </div>
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 line-clamp-1">2. ทักษะวิทยากร</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="q2-score" class="font-num text-xl font-bold text-emerald-400">-</span>
+              <span class="text-xs text-slate-400">/ 5.0</span>
+            </div>
+          </div>
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 line-clamp-1">3. การนำไปใช้จริง</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="q3-score" class="font-num text-xl font-bold text-emerald-400">-</span>
+              <span class="text-xs text-slate-400">/ 5.0</span>
+            </div>
+          </div>
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <span class="text-[11px] text-slate-400 line-clamp-1">4. สถานที่/อุปกรณ์</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="q4-score" class="font-num text-xl font-bold text-emerald-400">-</span>
+              <span class="text-xs text-slate-400">/ 5.0</span>
+            </div>
+          </div>
+          <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 sm:col-span-2 md:col-span-2">
+            <span class="text-[11px] text-slate-400 line-clamp-1">5. ภาพรวมความพึงพอใจ</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="q5-score" class="font-num text-xl font-bold text-emerald-400">-</span>
+              <span class="text-xs text-slate-400">/ 5.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right 1 Col: Stage QR Code & Recent Suggestions Stream -->
+      <div class="space-y-6">
+
+        <!-- Stage QR Code Card -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-900/90 border border-slate-800 rounded-3xl p-6 text-center shadow-sm">
+          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">สำหรับผู้เข้าร่วมอบรม</span>
+          <h3 class="text-base font-bold text-white mt-1">สแกน QR Code เพื่อทำแบบประเมิน</h3>
+          
+          <div class="mt-4 p-3 bg-white rounded-2xl inline-block shadow-md">
+            <div id="qrcode-box" class="w-40 h-40 flex items-center justify-center"></div>
+          </div>
+
+          <p class="text-xs text-slate-400 mt-3">เปิดกล้องมือถือแล้วสแกนตอบได้ทันที</p>
+          <div class="mt-2 text-[11px] text-slate-400 truncate max-w-xs mx-auto" id="survey-url-display">
+            survey.html
+          </div>
+        </div>
+
+        <!-- Latest Suggestions Stream -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col h-[340px]">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>💬 ข้อเสนอแนะล่าสุด</span>
+              <span id="comment-count-badge" class="font-num text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">0</span>
+            </h3>
+          </div>
+
+          <div id="suggestions-stream" class="flex-1 overflow-y-auto space-y-2.5 pr-1 text-xs">
+            <!-- Dynamic comments here -->
+            <div class="text-slate-500 text-center py-10">ยังไม่มีข้อเสนอแนะเพิ่มเติม</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Giant QR Code Modal for Stage Projection -->
+  <div id="qr-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-6">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-5">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white">สแกนเพื่อร่วมประเมินความพึงพอใจ</h3>
+        <button onclick="closeQrModal()" class="text-slate-400 hover:text-white text-xl p-1">✕</button>
+      </div>
+
+      <div class="p-6 bg-white rounded-3xl inline-block shadow-2xl">
+        <div id="modal-qrcode-box" class="w-64 h-64 flex items-center justify-center"></div>
+      </div>
+
+      <p class="text-sm text-slate-300">ใช้สมาร์ตโฟนสแกน ไม่ต้องติดตั้งแอปและไม่ต้องล็อกอิน</p>
+      
+      <button onclick="closeQrModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all">
+        ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. ตั้งค่า Firebase Configuration
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSy_YOUR_API_KEY",
+      authDomain: "your-project-id.firebaseapp.com",
+      databaseURL: "https://your-project-id-default-rtdb.firebaseio.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef"
+    };
+
+    let allResponses = [];
+    let chartInstance = null;
+
+    // คำนวณ URL สำหรับหน้าทำแบบสอบถาม
+    const currentUrl = window.location.href;
+    const surveyUrl = currentUrl.includes('dashboard.html')
+      ? currentUrl.replace('dashboard.html', 'survey.html')
+      : currentUrl.replace('?view=dashboard', '?view=survey');
+    
+    document.getElementById('survey-url-display').textContent = surveyUrl;
+
+    // สร้าง QR Code
+    new QRCode(document.getElementById('qrcode-box'), {
+      text: surveyUrl,
+      width: 160,
+      height: 160,
+      colorDark: "#0f172a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    new QRCode(document.getElementById('modal-qrcode-box'), {
+      text: surveyUrl,
+      width: 256,
+      height: 256,
+      colorDark: "#0f172a",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    let currentChartType = 'doughnut';
+    let currentScores = [0, 0, 0, 0, 0];
+
+    function setChartType(type) {
+      currentChartType = type;
+      const btnDoughnut = document.getElementById('btn-chart-doughnut');
+      const btnBar = document.getElementById('btn-chart-bar');
+      if (type === 'doughnut') {
+        btnDoughnut.className = 'px-3 py-1.5 rounded-lg font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer';
+        btnBar.className = 'px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all cursor-pointer';
+      } else {
+        btnBar.className = 'px-3 py-1.5 rounded-lg font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer';
+        btnDoughnut.className = 'px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-white transition-all cursor-pointer';
+      }
+      buildChart(currentScores);
+    }
+
+    function buildChart(dataValues) {
+      const ctx = document.getElementById('barChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      const isDoughnut = currentChartType === 'doughnut';
+      chartInstance = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+          labels: [
+            '1. เนื้อหาหลักสูตร',
+            '2. ทักษะวิทยากร',
+            '3. นำไปใช้จริง',
+            '4. สถานที่/อุปกรณ์',
+            '5. ภาพรวมพึงพอใจ'
+          ],
+          datasets: [{
+            label: 'คะแนนเฉลี่ย',
+            data: dataValues,
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.9)',
+              'rgba(6, 182, 212, 0.9)',
+              'rgba(59, 130, 246, 0.9)',
+              'rgba(168, 85, 247, 0.9)',
+              'rgba(245, 158, 11, 0.9)'
+            ],
+            borderColor: '#0f172a',
+            borderWidth: isDoughnut ? 3 : 1,
+            borderRadius: isDoughnut ? 0 : 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: isDoughnut,
+              position: 'right',
+              labels: { color: '#cbd5e1', font: { family: 'Prompt', size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = isDoughnut ? context.raw : context.parsed.y;
+                  return ' คะแนนเฉลี่ย: ' + Number(val).toFixed(2) + ' / 5.00';
+                }
+              }
+            }
+          },
+          scales: isDoughnut ? {} : {
+            y: {
+              min: 0,
+              max: 5,
+              ticks: { stepSize: 1, color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 12 } },
+              grid: { color: 'rgba(51, 65, 85, 0.4)' }
+            },
+            x: {
+              ticks: { color: '#cbd5e1', font: { family: 'Prompt', size: 12 } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // เริ่มต้น Chart.js
+    function initChart() {
+      buildChart([0, 0, 0, 0, 0]);
+    }
+
+    // แปลผลตามเกณฑ์ Likert 5 ระดับ
+    function interpretScore(score) {
+      if (score >= 4.51) return { label: 'มากที่สุด (ดีเยี่ยม)', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', desc: 'ระดับความพึงพอใจสูงสุด ยอดเยี่ยม' };
+      if (score >= 3.51) return { label: 'มาก (ดี)', class: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40', desc: 'ระดับความพึงพอใจดี เป็นไปตามเป้าหมาย' };
+      if (score >= 2.51) return { label: 'ปานกลาง (พอใช้)', class: 'bg-amber-500/20 text-amber-300 border-amber-500/40', desc: 'ระดับปานกลาง มีจุดที่พัฒนาเพิ่มเติมได้' };
+      if (score >= 1.51) return { label: 'น้อย (ควรปรับปรุง)', class: 'bg-orange-500/20 text-orange-300 border-orange-500/40', desc: 'ระดับน้อย ควรทบทวนเนื้อหาและสื่อ' };
+      return { label: 'น้อยที่สุด (ต้องแก้ไข)', class: 'bg-rose-500/20 text-rose-300 border-rose-500/40', desc: 'จำเป็นต้องปรับปรุงอย่างเร่งด่วน' };
+    }
+
+    // ประมวลผลและอัปเดตหน้า Dashboard
+    function updateDashboardUI(responses) {
+      allResponses = responses;
+      const count = responses.length;
+      document.getElementById('stat-count').textContent = count;
+
+      if (count === 0) {
+        document.getElementById('stat-overall-score').textContent = '0.00';
+        document.getElementById('stat-percentage').textContent = '0%';
+        document.getElementById('stat-badge').textContent = 'ยังไม่มีข้อมูล';
+        document.getElementById('stat-badge-desc').textContent = 'รอผู้เข้าอบรมเริ่มส่งแบบประเมิน';
+        if (chartInstance) {
+          chartInstance.data.datasets[0].data = [0, 0, 0, 0, 0];
+          chartInstance.update();
+        }
+        return;
+      }
+
+      // คำนวณค่าเฉลี่ยรายข้อ
+      let sumQ1 = 0, sumQ2 = 0, sumQ3 = 0, sumQ4 = 0, sumQ5 = 0;
+      responses.forEach(r => {
+        sumQ1 += Number(r.q1) || 0;
+        sumQ2 += Number(r.q2) || 0;
+        sumQ3 += Number(r.q3) || 0;
+        sumQ4 += Number(r.q4) || 0;
+        sumQ5 += Number(r.q5) || 0;
+      });
+
+      const avgQ1 = Number((sumQ1 / count).toFixed(2));
+      const avgQ2 = Number((sumQ2 / count).toFixed(2));
+      const avgQ3 = Number((sumQ3 / count).toFixed(2));
+      const avgQ4 = Number((sumQ4 / count).toFixed(2));
+      const avgQ5 = Number((sumQ5 / count).toFixed(2));
+      const overallAvg = Number(((avgQ1 + avgQ2 + avgQ3 + avgQ4 + avgQ5) / 5).toFixed(2));
+
+      // อัปเดตตัวเลข
+      document.getElementById('stat-overall-score').textContent = overallAvg.toFixed(2);
+      document.getElementById('stat-percentage').textContent = Math.round((overallAvg / 5) * 100) + '%';
+      
+      document.getElementById('q1-score').textContent = avgQ1.toFixed(2);
+      document.getElementById('q2-score').textContent = avgQ2.toFixed(2);
+      document.getElementById('q3-score').textContent = avgQ3.toFixed(2);
+      document.getElementById('q4-score').textContent = avgQ4.toFixed(2);
+      document.getElementById('q5-score').textContent = avgQ5.toFixed(2);
+
+      // แปลผล Likert
+      const interp = interpretScore(overallAvg);
+      const badge = document.getElementById('stat-badge');
+      badge.textContent = interp.label;
+      badge.className = 'px-3 py-1 rounded-xl font-bold text-sm md:text-base border ' + interp.class;
+      document.getElementById('stat-badge-desc').textContent = interp.desc;
+
+      // อัปเดตกราฟวงกลม/กราฟแท่ง
+      currentScores = [avgQ1, avgQ2, avgQ3, avgQ4, avgQ5];
+      if (chartInstance) {
+        chartInstance.data.datasets[0].data = currentScores;
+        chartInstance.update();
+      }
+
+      // อัปเดตข้อเสนอแนะล่าสุด
+      const commentsContainer = document.getElementById('suggestions-stream');
+      const commentsWithText = responses.filter(r => r.suggestions && r.suggestions.trim().length > 0);
+      document.getElementById('comment-count-badge').textContent = commentsWithText.length;
+
+      if (commentsWithText.length === 0) {
+        commentsContainer.innerHTML = '<div class="text-slate-500 text-center py-10">ยังไม่มีข้อเสนอแนะเพิ่มเติม</div>';
+      } else {
+        commentsContainer.innerHTML = commentsWithText.slice(0, 15).map(c => \`
+          <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span class="text-emerald-400 font-semibold">คะแนนเฉลี่ย: \${Number(c.overallScore || 0).toFixed(2)} ★</span>
+              <span>\${c.dateFormatted || new Date(c.timestamp).toLocaleTimeString('th-TH')}</span>
+            </div>
+            <p class="text-slate-200 text-xs leading-relaxed">\${escapeHtml(c.suggestions)}</p>
+          </div>
+        \`).join('');
+      }
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ==========================================
+    // เชื่อมต่อ Firebase Realtime Database
+    // ==========================================
+    let database = null;
+    try {
+      if (firebaseConfig.apiKey !== "AIzaSy_YOUR_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        // รับฟังการอัปเดตแบบ Realtime ตลอดเวลา
+        database.ref('evaluations').on('value', snapshot => {
+          const val = snapshot.val();
+          if (val) {
+            const list = Object.values(val);
+            list.sort((a, b) => b.timestamp - a.timestamp);
+            updateDashboardUI(list);
+          } else {
+            updateDashboardUI([]);
+          }
+        });
+      } else {
+        // Fallback โหมด LocalStorage สำหรับทดสอบทันที
+        console.warn("ยังไม่ได้ใส่ Firebase Config -> ดึงข้อมูลจาก LocalStorage/BroadcastChannel");
+        loadLocalData();
+
+        if (window.BroadcastChannel) {
+          const bc = new BroadcastChannel('training_survey_live_sync');
+          bc.onmessage = () => loadLocalData();
+        }
+      }
+    } catch (e) {
+      console.warn("Firebase Init fallback:", e);
+      loadLocalData();
+    }
+
+    function loadLocalData() {
+      const saved = JSON.parse(localStorage.getItem('training_eval_responses_v1') || '[]');
+      updateDashboardUI(saved);
+    }
+
+    // ดาวน์โหลดผลเป็น CSV
+    function exportCSV() {
+      if (allResponses.length === 0) {
+        alert('ยังไม่มีข้อมูลการตอบแบบประเมิน');
+        return;
+      }
+      const headers = ['ลำดับ', 'เวลา', 'ข้อ 1 (เนื้อหา)', 'ข้อ 2 (วิทยากร)', 'ข้อ 3 (นำไปใช้)', 'ข้อ 4 (สถานที่)', 'ข้อ 5 (ภาพรวม)', 'เฉลี่ย', 'ข้อเสนอแนะ'];
+      const rows = allResponses.map((r, i) => [
+        i + 1,
+        '"' + (r.dateFormatted || new Date(r.timestamp).toLocaleString('th-TH')) + '"',
+        r.q1, r.q2, r.q3, r.q4, r.q5,
+        Number(r.overallScore || 0).toFixed(2),
+        '"' + (r.suggestions || '').replace(/"/g, '""') + '"'
+      ]);
+      const csv = '\\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\\r\\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'training-evaluation-report.csv';
+      a.click();
+    }
+
+    function openQrModal() {
+      document.getElementById('qr-modal').classList.remove('hidden');
+    }
+    function closeQrModal() {
+      document.getElementById('qr-modal').classList.add('hidden');
+    }
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // เริ่มทำงานเมื่อโหลดหน้าเสร็จ
+    window.onload = function() {
+      initChart();
+    };
+  </script>
+</body>
+</html>`;

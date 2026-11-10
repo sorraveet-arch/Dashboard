@@ -1,0 +1,6 @@
+{
+  "name": "Live Training Satisfaction & Realtime Dashboard",
+  "description": "ระบบประเมินความพึงพอใจการอบรมแบบเรียลไทม์ พร้อมหน้าตอบ Mobile-first และ Live Dashboard ฉายจอโปรเจกเตอร์",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
