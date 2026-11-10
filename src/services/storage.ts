@@ -156,6 +156,38 @@ class StorageService {
     this.notifyListeners(INITIAL_MOCK_RESPONSES);
   }
 
+  public importResponses(newEntries: EvaluationResponse[], mode: 'append' | 'replace'): void {
+    if (typeof window === 'undefined' || newEntries.length === 0) return;
+    const existing = mode === 'append' ? this.getLocalResponses() : [];
+    // Ensure all entries have valid overallScore and ids
+    const sanitized = newEntries.map((item, idx) => {
+      const avg = Number(((item.q1 + item.q2 + item.q3 + item.q4 + item.q5) / 5).toFixed(2));
+      const timestamp = item.timestamp || Date.now() - idx * 1000;
+      return {
+        ...item,
+        id: item.id || `import-${timestamp}-${idx}`,
+        timestamp,
+        dateFormatted: item.dateFormatted || new Date(timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        overallScore: item.overallScore || avg,
+      };
+    });
+
+    const combined = [...sanitized, ...existing];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(combined));
+
+    if (this.channel) {
+      this.channel.postMessage({ type: 'SYNC_ALL', payload: combined });
+    }
+    this.notifyListeners(combined);
+
+    // If Firebase is configured, push imported entries
+    if (this.firebaseConfig?.databaseURL) {
+      sanitized.forEach((entry) => {
+        this.pushToFirebase(entry).catch((e) => console.warn('Firebase batch push note:', e));
+      });
+    }
+  }
+
   public exportToCSV(responses: EvaluationResponse[], filename = 'training-evaluation-results.csv'): void {
     if (!responses || responses.length === 0) return;
 

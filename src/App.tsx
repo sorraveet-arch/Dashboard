@@ -3,11 +3,13 @@ import { MobileSurveyView } from './components/MobileSurveyView';
 import { ProjectorDashboardView } from './components/ProjectorDashboardView';
 import { StandaloneCodeGuideView } from './components/StandaloneCodeGuideView';
 import { FirebaseSettingsModal } from './components/FirebaseSettingsModal';
-import { Smartphone, MonitorPlay, FileCode, Sliders } from 'lucide-react';
+import { Smartphone, MonitorPlay, FileCode, Sliders, Upload } from 'lucide-react';
+import { UploadDataModal } from './components/UploadDataModal';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'survey' | 'guide'>('dashboard');
   const [isFirebaseModalOpen, setIsFirebaseModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // Check URL query parameters on initial load
   useEffect(() => {
@@ -86,8 +88,17 @@ export default function App() {
 
           </div>
 
-          {/* Quick Settings */}
+          {/* Quick Settings & Upload */}
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 rounded-lg border border-slate-700/60 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="อัปโหลดไฟล์ Excel หรือ CSV"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">อัปโหลด Excel/CSV</span>
+            </button>
+
             <button
               onClick={() => setIsFirebaseModalOpen(true)}
               className="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700/60 transition-colors"
@@ -123,6 +134,12 @@ export default function App() {
       <FirebaseSettingsModal
         isOpen={isFirebaseModalOpen}
         onClose={() => setIsFirebaseModalOpen(false)}
+      />
+
+      {/* Global Upload Data Modal */}
+      <UploadDataModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
       />
 
     </div>

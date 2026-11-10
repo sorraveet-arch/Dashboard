@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { EVALUATION_QUESTIONS, RATING_OPTIONS } from '../constants/questions';
 import { storage } from '../services/storage';
-import { CheckCircle2, AlertCircle, RefreshCw, Sparkles, Send, ShieldCheck, Heart } from 'lucide-react';
+import { CheckCircle2, AlertCircle, RefreshCw, Sparkles, Send, ShieldCheck, Heart, Upload, FileSpreadsheet } from 'lucide-react';
+import { UploadDataModal } from './UploadDataModal';
 
 interface MobileSurveyViewProps {
   onGoToDashboard?: () => void;
@@ -21,6 +22,7 @@ export const MobileSurveyView: React.FC<MobileSurveyViewProps> = ({ onGoToDashbo
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     setHasSubmitted(storage.hasAlreadySubmitted());
@@ -145,6 +147,27 @@ export const MobileSurveyView: React.FC<MobileSurveyViewProps> = ({ onGoToDashbo
             ข้อมูลทั้งหมดจะนำไปประมวลผลขึ้นจอ Dashboard ทันที
           </div>
         )}
+
+        {/* Upload Raw Data Banner */}
+        <div className="p-3 bg-slate-800/50 hover:bg-slate-800/70 border border-slate-700/70 rounded-2xl flex items-center justify-between gap-2 transition-all">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white">นำเข้าข้อมูลจากไฟล์</p>
+              <p className="text-[11px] text-slate-400">อัปโหลดไฟล์ Excel (.xlsx) หรือ CSV</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1 shadow-sm transition-all cursor-pointer shrink-0"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>อัปโหลด</span>
+          </button>
+        </div>
 
         {/* Already Submitted Warning / Acknowledgement */}
         {hasSubmitted ? (
@@ -328,6 +351,12 @@ export const MobileSurveyView: React.FC<MobileSurveyViewProps> = ({ onGoToDashbo
           </div>
         </div>
       )}
+
+      {/* Upload Data Modal */}
+      <UploadDataModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+      />
     </div>
   );
 };

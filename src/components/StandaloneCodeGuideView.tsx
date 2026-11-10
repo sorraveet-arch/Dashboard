@@ -13,6 +13,7 @@ import {
   Layers,
   ArrowRight,
   Sparkles,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface StandaloneCodeGuideViewProps {
@@ -307,6 +308,59 @@ export const StandaloneCodeGuideView: React.FC<StandaloneCodeGuideViewProps> = (
                     <p className="text-emerald-400 font-medium">4. จะได้รับ URL สำหรับแชร์และขึ้นจอโปรเจกเตอร์ทันที!</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Step 6 */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+              <div className="flex items-start gap-3">
+                <span className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-sm">
+                  6
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                    <span>การอัปโหลดไฟล์ข้อมูลดิบ (Excel .xlsx, .xls หรือ CSV)</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    ระบบรองรับการนำเข้าคะแนนที่เก็บรวบรวมไว้ล่วงหน้าจากแบบฟอร์มภายนอก (Google Forms, กระดาษ ฯลฯ)
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-3">
+                <p>
+                  ระบบมีอัลกอริทึม <strong>Fuzzy Header Matching</strong> ที่ตรวจจับชื่อคอลัมน์อัตโนมัติ ไม่ว่าหัวตารางจะเป็นภาษาไทยหรืออังกฤษ:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 font-mono text-[11px]">
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อ 1:</span>
+                    <span className="text-slate-400">q1, ข้อ 1, เนื้อหา, หลักสูตร</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อ 2:</span>
+                    <span className="text-slate-400">q2, ข้อ 2, วิทยากร, ผู้สอน</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อ 3:</span>
+                    <span className="text-slate-400">q3, ข้อ 3, นำไปใช้, ประโยชน์</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อ 4:</span>
+                    <span className="text-slate-400">q4, ข้อ 4, สถานที่, อุปกรณ์, เวลา</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อ 5:</span>
+                    <span className="text-slate-400">q5, ข้อ 5, ภาพรวม, พึงพอใจ</span>
+                  </div>
+                  <div className="p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                    <span className="text-emerald-400 font-bold block">ข้อเสนอแนะ:</span>
+                    <span className="text-slate-400">suggestions, comment, ข้อเสนอแนะ</span>
+                  </div>
+                </div>
+                <p className="text-slate-400 text-[11px]">
+                  * สามารถกดปุ่ม <strong>"ดาวน์โหลดเทมเพลตตัวอย่าง (.xlsx / .csv)"</strong> จากหน้าต่างอัปโหลดเพื่อนำไปใส่ข้อมูลได้ทันที
+                </p>
               </div>
             </div>
 

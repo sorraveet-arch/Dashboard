@@ -20,8 +20,10 @@ import {
   PieChart,
   CircleDot,
   BarChart3,
+  Upload,
 } from 'lucide-react';
 import { QRCodeModal } from './QRCodeModal';
+import { UploadDataModal } from './UploadDataModal';
 
 interface ProjectorDashboardViewProps {
   onOpenMobileView?: () => void;
@@ -37,6 +39,7 @@ export const ProjectorDashboardView: React.FC<ProjectorDashboardViewProps> = ({
   const [responses, setResponses] = useState<EvaluationResponse[]>([]);
   const [chartViewType, setChartViewType] = useState<'circular' | 'bar'>('circular');
   const [isQrModalOpen, setIsQrModalOpen] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [surveyUrl, setSurveyUrl] = useState<string>('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -249,6 +252,16 @@ export const ProjectorDashboardView: React.FC<ProjectorDashboardViewProps> = ({
             >
               <QrCode className="w-3.5 h-3.5 text-emerald-400" />
               <span>ขยาย QR Code ขึ้นจอ</span>
+            </button>
+
+            {/* Upload Excel / CSV */}
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              title="อัปโหลดไฟล์ข้อมูลดิบ Excel (.xlsx, .xls) หรือ CSV"
+            >
+              <Upload className="w-3.5 h-3.5 text-emerald-400" />
+              <span>อัปโหลด Excel / CSV</span>
             </button>
 
             {/* Export CSV */}
@@ -779,6 +792,12 @@ export const ProjectorDashboardView: React.FC<ProjectorDashboardViewProps> = ({
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
         surveyUrl={surveyUrl}
+      />
+
+      {/* Upload Excel / CSV Data Modal */}
+      <UploadDataModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
       />
     </div>
   );
